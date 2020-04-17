@@ -1,9 +1,9 @@
 clc; clear; close all
 
 g_x = [1 0 1 0 0 1 1 0 1 0 1 1 1 1 0 0 1];
-k = 8;                  % Длина сообщения
-r = length(g_x) - 1;    % Длина CRC части
-num_messages = 2^k;     % Количество возможных сообщений
+k = 8;                 
+r = length(g_x) - 1;    
+num_messages = 2^k;     
 G = [
 [1, 1, 0, 1]
 [1, 0, 1, 1]
@@ -19,24 +19,24 @@ H = [
 [0, 0, 0, 1, 1, 1, 1]
 ];
 
-messages = de2bi((0:num_messages-1)');     % Все возможные сообщения
-codewords = zeros(num_messages, k+r);      % Все кодовые слова с CRC
+messages = de2bi((0:num_messages-1)');     
+codewords = zeros(num_messages, k+r);      
 mes_6_4 = zeros(num_messages, 6, 4);     
-channel_6_7 = zeros(num_messages, 6, 7); % Замодулированные BPSK (-1, 1)
-                                           % без добавленных 3х нулей,
-% Генерация                                  которые отправляются в канал
+channel_6_7 = zeros(num_messages, 6, 7); 
+                                           
+                            
 for j=1:num_messages
-    [~, c] = gfdeconv([zeros(1, r), messages(j,:)], g_x);   % CRC часть
-    codewords(j,:) = xor([zeros(1, r), messages(j,:)], ...  % Сообщение +
-                         [c, zeros(1, k+r - length(c))]);   % + CRC
-    mes_6_4(j, :, :) = reshape(codewords(j, :), 4, 6)';     % + нули
+    [~, c] = gfdeconv([zeros(1, r), messages(j,:)], g_x);   
+    codewords(j,:) = xor([zeros(1, r), messages(j,:)], ...  
+                         [c, zeros(1, k+r - length(c))]);   
+    mes_6_4(j, :, :) = reshape(codewords(j, :), 4, 6)';    
     for i=1:6
         channel_6_7(j, i, :) = mod(reshape(mes_6_4(j, i, :), 1, 4) ...
                                     * G', 2)*(-2) + 1; 
     end
 end
 
-% Теоретический расчет
+
 SNRdB = -10:10;
 SNR = 10.^(SNRdB./10);
 Pe_bit_theor = qfunc(sqrt(2.*SNR));         
@@ -53,11 +53,11 @@ for i=1:length(SNR)
     Ped_theor(i) = Pe_theoretical;
 end
 
-% Моделирование
-Pe_bit = zeros(1,length(SNRdB));  % Вероятность ошибки на бит
+
+Pe_bit = zeros(1,length(SNRdB));  
 Pe_bit_after_Hamming = zeros(1,length(SNRdB));
-Ped = zeros(1,length(SNRdB));     % Вероятность ошибки декодирования
-T = zeros(1,length(SNRdB));       % Пропускная способность канала
+Ped = zeros(1,length(SNRdB));     
+T = zeros(1,length(SNRdB));       
 for i=1:length(SNR)
     disp(i);
     sigma = sqrt(1/(2*SNR(i)));
@@ -108,10 +108,10 @@ legend('Pe bit', 'Pe bit after Hamming', 'Pe bit theor');
 xlabel('E/N_0, dB')
 subplot(1, 2, 2);
 plot(SNRdB, T, 'b.-');
-ylabel('T, пропускная способность');
+ylabel('T, РїСЂРѕРїСѓСЃРєРЅР°СЏ СЃРїРѕСЃРѕР±РЅРѕСЃС‚СЊ');
 xlabel('E/N_0, dB')
 
-% Синдромное декодирование
+
 function [concatenated, nErrBits, v] = correctError(AWGN, H, c)
 	unBPSK = AWGN < 0;
     nErrBits = sum(sum(xor(c < 0, unBPSK)));
